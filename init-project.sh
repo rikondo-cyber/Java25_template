@@ -69,8 +69,11 @@ mkdir -p src/main/java/$PACKAGE_PATH
 mkdir -p src/test/java/$PACKAGE_PATH
 
 # Applicationクラス作成
-MAIN_CLASS="${PROJECT_NAME//[-_]/.}"
-MAIN_CLASS="$(echo ${MAIN_CLASS} | sed 's/\b\(.\)/\u\1/g')Application"
+# ハイフンとアンダースコアを削除し、PascalCaseに変換
+MAIN_CLASS=$(echo $PROJECT_NAME | sed 's/[-_.]/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1' | sed 's/ //g')
+MAIN_CLASS="${MAIN_CLASS}Application"
+
+echo "📝 Creating main class: ${MAIN_CLASS}.java"
 
 cat > src/main/java/$PACKAGE_PATH/${MAIN_CLASS}.java << EOF
 package ${PACKAGE_NAME};

@@ -103,15 +103,9 @@ rm -rf .git
 # 3. 初期化スクリプト実行
 chmod +x init-project.sh
 ./init-project.sh my-api com.mycompany.myapi 5434 8081
-"Example: ./init-project.sh my-api com.mycompany.myapi 5434(default) 8081(default)"
-左から順に、プロジェクト名、パッケージ名、DBポート(初期値5434)、APPポート(初期値8081)
-
-
-# 4. 新しいGitリポジトリとして初期化
-git init
-git add .
-git commit -m "Initial commit from template"
-
+"Example: ./init-project.sh my-api com.mycompany.myapi 5433(default) 8080(default)"
+左から順に、プロジェクト名、パッケージ名、DBポート(初期値5433)、APPポート(初期値8080)
+自動git init
 
 ### 起動手順（VS Code 推奨）
 
