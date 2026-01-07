@@ -1,3 +1,6 @@
+
+
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.1'
@@ -38,7 +41,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     
     // Development tools
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    developmentOnly "org.springframework.boot:spring-boot-devtools"
+
     
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -47,6 +51,19 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// bootRunタスクの設定（必要に応じて）
+tasks.withType(org.springframework.boot.gradle.tasks.run.BootRun).configureEach {
+    systemProperty 'spring.devtools.restart.enabled', 'true'
+    // Java 9以降、ポートの*で全インターフェースをリッスン
+    systemProperty 'spring.devtools.restart.port', '7000' // デバッグポート
+    systemProperty 'spring.devtools.restart.enabled', 'true'
+}
+
+
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+springBoot {
+  mainClass = "com.example.MySpringAppApplication"
 }

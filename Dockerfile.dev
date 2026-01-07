@@ -1,0 +1,9 @@
+FROM gradle:9.2.1-jdk25
+WORKDIR /workspace
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends bash vim \
+  && rm -rf /var/lib/apt/lists/*
+
+CMD ["sh", "-lc", "chmod +x ./gradlew && ./gradlew --no-daemon bootRun"]
+

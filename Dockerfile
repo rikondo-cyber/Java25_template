@@ -1,37 +1,31 @@
 # Build stage
-FROM gradle:9.2.1-jdk25 AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
-# Copy gradle files
-COPY build.gradle settings.gradle ./
+# gradlew を使う前提（Wrapperを必ずrepoに含める）
+COPY gradlew .
 COPY gradle ./gradle
+COPY build.gradle settings.gradle ./
 
-# Download dependencies
-RUN gradle dependencies --no-daemon
+RUN chmod +x ./gradlew
+# 依存を先に落としてキャッシュを効かせる
+RUN ./gradlew --no-daemon dependencies
 
-# Copy source code
+# ソースコピー
 COPY src ./src
 
-# Build application
-RUN gradle build --no-daemon -x test
+# 本番jar作成（テストは必要なら外す）
+RUN ./gradlew --no-daemon clean bootJar -x test
 
 # Runtime stage
-FROM eclipse-temurin:25-jdk-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
-# Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Copy jar from build stage
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Expose port
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
-
-# Run application
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
