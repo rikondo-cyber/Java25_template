@@ -13,213 +13,171 @@ Java 25 LTS + Spring Boot + Gradle + Docker環境のテンプレートプロジ�
 ## プロジェクト構造
 
 ```
-project/
+Java_template/
+├── docker-compose.db.yml # DBのみ起動（IDE開発用）
+├── docker-compose.dev.yml # 開発用（VS Code Dev Container / bootRun）
+├── docker-compose.prod.yml # 本番用（jar起動）
+├── Dockerfile # 本番用 multi-stage build
+├── Dockerfile.dev # 開発用（Gradle + JDK）
+├── .dockerignore
+├── gradlew # Gradle Wrapper（Linux/Mac）
+├── gradlew.bat # Gradle Wrapper（Windows）
+├── gradle/
+│ └── wrapper/
+│ └── gradle-wrapper.properties
+├── .devcontainer/
+│ └── devcontainer.json # VS Code Dev Containers 設定
 ├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   └── resources/
-│   │       └── application.yml
-│   └── test/
-├── build.gradle
-├── settings.gradle
-├── Dockerfile
-├── docker-compose.yml
-└── .dockerignore
+│ └── main/
+│ ├── java/
+│ │ └── com/example/
+│ │ ├── MySpringAppApplication.java
+│ │ └── HelloController.java
+│ └── resources/
+│ ├── application.yml # 共通設定
+│ └── application-dev.yml # 開発用設定
+└── README.md
 ```
 
-## セットアップ手順
+# Java Spring Boot Docker Template
 
-### 1. 初期設定
+このリポジトリは **3つの利用シナリオ**（IDE開発 / VS Code Dev Container開発 / 本番デプロイ）を想定したテンプレートです。  
+それぞれ使う compose ファイルと起動方法が異なります。
 
-**settings.gradle を作成:**
-```groovy
-rootProject.name = 'my-spring-app'
-```
+---
 
-**src/main/resources/application.yml を配置**
+## シナリオ1：IDEを使った開発（Eclipse / IntelliJ など）
 
-### 2. Docker環境の起動
+**目的**：アプリはIDEから起動し、DBだけDockerで用意する  
+**使うファイル**：`docker-compose.db.yml`
 
+### 起動手順（DBのみ起動）
 ```bash
-# すべてのサービスを起動
-docker-compose up -d
-
-# ログを確認
-docker-compose logs -f app
-
-# PostgreSQLのみ起動
-docker-compose up -d postgres
+docker compose -f docker-compose.db.yml up -d
 ```
 
-### 3. アプリケーションへのアクセス
-
-- アプリケーション: http://localhost:8080
-- ヘルスチェック: http://localhost:8080/actuator/health
-- PostgreSQL: localhost:5432
-
-## 開発コマンド
-
-### Docker操作
-
+### 停止（DB停止）
 ```bash
-# ビルドして起動
-docker-compose up --build
-
-# 停止
-docker-compose down
-
-# ボリュームも削除して停止
-docker-compose down -v
-
-# 再ビルド
-docker-compose build --no-cache
+docker compose -f docker-compose.db.yml down
 ```
 
-### Gradleコマンド（ローカル）
+### DB接続情報（IDE側の設定）
 
+- **Host**: `localhost`
+- **Port**: `5433`（※ compose で `5433:5432` にしているため）
+- **DB**: `appdb`
+- **User**: `appuser`
+- **Password**: `apppass`
+
+### アプリ起動（IDE側）
+
+Eclipse / IntelliJ で Spring Boot を通常起動（Run/Debug）
+
+**推奨**：`SPRING_PROFILES_ACTIVE=dev` をIDEの起動設定に入れる  
+（`application-dev.yml` を使うため）
+
+例：
 ```bash
-# ビルド
-./gradlew build
-
-# テスト実行
-./gradlew test
-
-# アプリケーション起動
-./gradlew bootRun
-
-# 依存関係の確認
-./gradlew dependencies
-```
-
-### コンテナ内でのコマンド実行
-
-```bash
-# コンテナに入る
-docker exec -it spring-boot-app sh
-
-# ログ確認
-docker logs spring-boot-app
-
-# PostgreSQLに接続
-docker exec -it postgres-db psql -U myuser -d mydb
-```
-
-## 環境変数のカスタマイズ
-
-.env ファイルを作成して環境変数を管理:
-
-```env
-# Database
-POSTGRES_DB=mydb
-POSTGRES_USER=myuser
-POSTGRES_PASSWORD=mypassword
-
-# Application
 SPRING_PROFILES_ACTIVE=dev
-JAVA_OPTS=-Xmx512m -Xms256m
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=appdb
+DB_USER=appuser
+DB_PASSWORD=apppass
 ```
 
-docker-compose.yml で読み込み:
-```yaml
-services:
-  app:
-    env_file:
-      - .env
-```
+---
 
-## 本番環境用の設定
+## シナリオ2：VS Code + Dev Containers を使った開発
 
-### Dockerイメージのビルド
+**目的**：ローカルに Java/Gradle を入れず、コンテナ内で開発・起動する（ホットリロード/bootRun）  
+**使うファイル**：`docker-compose.dev.yml`
 
+# 1. テンプレートをクローン
+git clone https://github.com/rikondo-cyber/Java25_template.git my-new-project
+cd my-new-project
+
+# 2. Git履歴をクリーンアップ（テンプレートの履歴を削除）
+rm -rf .git
+
+# 3. 初期化スクリプト実行
+chmod +x init-project.sh
+./init-project.sh my-api com.mycompany.myapi 5434 8081
+"Example: ./init-project.sh my-api com.mycompany.myapi 5434(default) 8081(default)"
+左から順に、プロジェクト名、パッケージ名、DBポート(初期値5434)、APPポート(初期値8081)
+
+
+# 4. 新しいGitリポジトリとして初期化
+git init
+git add .
+git commit -m "Initial commit from template"
+
+
+### 起動手順（VS Code 推奨）
+
+1. VS Codeでこのリポジトリを開く
+2. コマンドパレットから **Dev Containers: Reopen in Container**
+3. 自動で `docker-compose.dev.yml` が立ち上がり、`bootRun` が走ります
+
+### ターミナルで起動したい場合
 ```bash
-# イメージをビルド
-docker build -t my-spring-app:latest .
-
-# タグ付け
-docker tag my-spring-app:latest registry.example.com/my-spring-app:1.0.0
-
-# プッシュ
-docker push registry.example.com/my-spring-app:1.0.0
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-### マルチステージビルドの利点
-
-- ビルド依存関係を最終イメージに含めない
-- イメージサイズの削減
-- セキュリティの向上（JDKではなくJREを使用）
-
-## トラブルシューティング
-
-### ポートが既に使用されている
-
+### 停止
 ```bash
-# 使用中のポートを確認
-lsof -i :8080
-netstat -ano | findstr :8080  # Windows
-
-# docker-compose.yml のポートを変更
-ports:
-  - "8081:8080"
+docker compose -f docker-compose.dev.yml down
 ```
 
-### ビルドエラー
+### 仕様（dev）
 
+- `app` は `./gradlew bootRun` で起動（開発向け）
+- ソースは `.:/workspace` でマウント（編集が即反映）
+- Gradle キャッシュは `gradle-cache` volume に保存
+
+---
+
+## シナリオ3：本番デプロイ用（コンテナで起動）
+
+**目的**：本番向けに jar をビルドして、軽量なランタイムイメージで起動する  
+**使うファイル**：`docker-compose.prod.yml`（内部で `Dockerfile` を使用）
+
+### 起動（ビルドして起動）
 ```bash
-# キャッシュをクリア
-./gradlew clean
-docker-compose down -v
-docker-compose build --no-cache
+docker compose -f docker-compose.prod.yml up --build -d
 ```
 
-### データベース接続エラー
-
+### 停止
 ```bash
-# PostgreSQLの起動を確認
-docker-compose ps
-
-# 接続テスト
-docker exec -it postgres-db psql -U myuser -d mydb
-
-# アプリケーションのログを確認
-docker-compose logs app
+docker compose -f docker-compose.prod.yml down
 ```
 
-## カスタマイズポイント
+### 仕様（prod）
 
-1. **build.gradle**: 必要な依存関係を追加
-2. **application.yml**: 環境に応じた設定
-3. **docker-compose.yml**: サービスの追加（MongoDB、Elasticsearchなど）
-4. **Dockerfile**: Java起動オプションの調整
+- `Dockerfile` は multi-stage build
+  - **build stage**: `./gradlew clean bootJar -x test`
+  - **runtime stage**: `jre-alpine` + 非rootユーザーで `java -jar app.jar`
+- `SPRING_PROFILES_ACTIVE=prod` で起動（compose 側で指定）
 
-## セキュリティのベストプラクティス
+---
 
-- 本番環境では環境変数やシークレット管理ツールを使用
-- デフォルトのパスワードを変更
-- 非rootユーザーでアプリケーションを実行
-- 最小限の権限でコンテナを実行
-- 定期的なイメージの更新
+## 共通：アクセス先
 
-## その他のサービスの追加例
+- **API**: http://localhost:8080
+- **Health**: http://localhost:8080/actuator/health
+- **PostgreSQL**（IDEシナリオ時）: `localhost:5433`
 
-### MongoDB
+---
 
-```yaml
-mongodb:
-  image: mongo:7
-  ports:
-    - "27017:27017"
-  environment:
-    MONGO_INITDB_ROOT_USERNAME: admin
-    MONGO_INITDB_ROOT_PASSWORD: password
+## よく使うログ確認
+```bash
+# Dev環境
+docker compose -f docker-compose.dev.yml logs -f app
+
+# 本番環境
+docker compose -f docker-compose.prod.yml logs -f app
+
+# DBのみ
+docker compose -f docker-compose.db.yml logs -f db
 ```
 
-### Elasticsearch
-
-```yaml
-elasticsearch:
-  image: elasticsearch:8.11.0
-  ports:
-    - "9200:9200"
-  environment:
-    - discovery.type=single-node
-```
