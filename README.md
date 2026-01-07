@@ -93,35 +93,63 @@ DB_PASSWORD=apppass
 **目的**：ローカルに Java/Gradle を入れず、コンテナ内で開発・起動する（ホットリロード/bootRun）  
 **使うファイル**：`docker-compose.dev.yml`
 
-# 1. テンプレートをクローン
+---
+
+### セットアップ手順
+
+#### 1. テンプレートをクローン
+```bash
 git clone https://github.com/rikondo-cyber/Java25_template.git my-new-project
 cd my-new-project
+```
 
-# 2. Git履歴をクリーンアップ（テンプレートの履歴を削除）
+#### 2. Git履歴をクリーンアップ（テンプレートの履歴を削除）
+```bash
 rm -rf .git
+```
 
-# 3. 初期化スクリプト実行
+#### 3. 初期化スクリプト実行
+```bash
 chmod +x init-project.sh
 ./init-project.sh my-api com.mycompany.myapi 5434 8081
-"Example: ./init-project.sh my-api com.mycompany.myapi 5433(default) 8080(default)"
-左から順に、プロジェクト名、パッケージ名、DBポート(初期値5433)、APPポート(初期値8080)
-自動git init
+```
+
+**使用例**:
+```bash
+./init-project.sh my-api com.mycompany.myapi 5433 8080
+```
+
+**引数の説明**（左から順に）:
+- **プロジェクト名**: `my-api`
+- **パッケージ名**: `com.mycompany.myapi`
+- **DBポート**: `5433`（デフォルト）
+- **APPポート**: `8080`（デフォルト）
+
+※ 初期化スクリプトは自動的に `git init` を実行します
+
+---
 
 ### 起動手順（VS Code 推奨）
 
 1. VS Codeでこのリポジトリを開く
-2. コマンドパレットから **Dev Containers: Reopen in Container**
-3. 自動で `docker-compose.dev.yml` が立ち上がり、`bootRun` が走ります
+2. コマンドパレットから **Dev Containers: Reopen in Container** を選択
+3. 自動で `docker-compose.dev.yml` が立ち上がり、`bootRun` が実行されます
+
+---
 
 ### ターミナルで起動したい場合
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
 
+---
+
 ### 停止
 ```bash
 docker compose -f docker-compose.dev.yml down
 ```
+
+---
 
 ### 仕様（dev）
 
